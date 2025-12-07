@@ -6,7 +6,7 @@ This repository contains the source code for the **Kneelsa-Clinical** web applic
 
 This app implements the **5-variable clinical prediction model** described in our research. It serves as the initial triage step in a serial multimodal pipeline (Clinical -> Image).
 
-**Live Demo:** [Insert Streamlit Cloud Link Here]
+**Live Demo:** [https://kneelsa-clinical.streamlit.app/](https://kneelsa-clinical.streamlit.app/)
 
 ## Model Details
 
