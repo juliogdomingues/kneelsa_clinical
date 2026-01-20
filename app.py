@@ -48,13 +48,10 @@ knee_selection = st.radio(
     index=2
 )
 
-# Input variables for knees
+# Determine which knees to assess
 knees_to_assess = []
-knee_data = {}
-
 if "Left" in knee_selection:
     knees_to_assess.append("Left")
-
 if "Right" in knee_selection:
     knees_to_assess.append("Right")
 
@@ -66,7 +63,6 @@ if len(knees_to_assess) == 1:
     pain = st.checkbox(f"Frequent {knee} Knee Pain?", key=f"pain_{knee}", help="Pain on most days of the last month")
     surgery = st.checkbox(f"History of {knee} Knee Surgery?", key=f"surgery_{knee}")
     trauma = st.checkbox(f"History of {knee} Knee Trauma/Injury?", key=f"trauma_{knee}")
-    knee_data[knee] = {"pain": pain, "surgery": surgery, "trauma": trauma}
 else:
     # Two columns for both knees
     col_left, col_right = st.columns(2)
@@ -76,14 +72,12 @@ else:
         pain_left = st.checkbox("Frequent Pain?", key="pain_Left", help="Pain on most days in a month in the last 12 months")
         surgery_left = st.checkbox("History of Surgery?", key="surgery_Left")
         trauma_left = st.checkbox("History of Trauma/Injury?", key="trauma_Left")
-        knee_data["Left"] = {"pain": pain_left, "surgery": surgery_left, "trauma": trauma_left}
     
     with col_right:
         st.markdown("#### Right Knee")
         pain_right = st.checkbox("Frequent Pain?", key="pain_Right", help="Pain on most days in a month in the last 12 months")
         surgery_right = st.checkbox("History of Surgery?", key="surgery_Right")
         trauma_right = st.checkbox("History of Trauma/Injury?", key="trauma_Right")
-        knee_data["Right"] = {"pain": pain_right, "surgery": surgery_right, "trauma": trauma_right}
 
 # ==========================================
 # CÁLCULO
@@ -112,12 +106,16 @@ if st.button("Calculate Probability", type="primary"):
     
     # Display results for each knee
     for knee in knees_to_assess:
+        knee_pain = st.session_state.get(f"pain_{knee}", False)
+        knee_surgery = st.session_state.get(f"surgery_{knee}", False)
+        knee_trauma = st.session_state.get(f"trauma_{knee}", False)
+        
         prob = calculate_probability(
             age=age,
             bmi=bmi,
-            pain=knee_data[knee]["pain"],
-            surgery=knee_data[knee]["surgery"],
-            trauma=knee_data[knee]["trauma"]
+            pain=knee_pain,
+            surgery=knee_surgery,
+            trauma=knee_trauma
         )
         
         # Create a nice display with metric
