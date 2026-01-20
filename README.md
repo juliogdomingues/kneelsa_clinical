@@ -4,20 +4,26 @@ This repository contains the source code for the **Kneelsa-Clinical** web applic
 
 ## About
 
-This app implements the **5-variable clinical prediction model** described in our research. It serves as the initial triage step in a serial multimodal pipeline (Clinical -> Image).
+This app implements the **5-variable clinical prediction model** described in our research. It provides per-knee probability estimates of radiographic osteoarthritis.
 
 **Live Demo:** [https://kneelsa-clinical.streamlit.app/](https://kneelsa-clinical.streamlit.app/)
 
 ## Model Details
 
 - **Type:** Logistic Regression
-- **Input Variables:**
+- **Patient-level Variables (shared between knees):**
   1. Age (years)
   2. BMI ($kg/m^2$)
-  3. Frequent Knee Pain (Yes/No)
-  4. History of Knee Surgery (Yes/No)
-  5. History of Knee Trauma (Yes/No)
-- **Output:** Probability of Radiographic KOA (KL $\ge$ 2)
+- **Knee-specific Variables:** 3. Frequent Knee Pain (Yes/No) 4. History of Knee Surgery (Yes/No) 5. History of Knee Trauma (Yes/No)
+- **Output:** Probability of Radiographic KOA (KL $\ge$ 2) **per knee**
+
+## Features
+
+- Assess one knee at a time or both knees simultaneously
+- Patient demographics (age, BMI) are shared across knees
+- Clinical features can vary between left and right knees
+- Direct probability output without screening thresholds
+- Suitable for risk stratification and clinical decision-making
 
 ## How to Run Locally
 

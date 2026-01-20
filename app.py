@@ -13,11 +13,6 @@ COEF_PAIN = 0.3634
 COEF_SURGERY = 2.0405
 COEF_TRAUMA = 0.7674
 
-# Limiar de corte (Threshold) para 90% de sensibilidade
-# Este valor deve ser calibrado com base na curva ROC do modelo.
-# Para fins de demonstração, usaremos um valor ilustrativo que pode ser ajustado.
-THRESHOLD = 0.10 
-
 # ==========================================
 # INTERFACE DO USUÁRIO
 # ==========================================
@@ -26,29 +21,75 @@ st.set_page_config(page_title="Kneelsa-Clinical", page_icon="🦵")
 st.title("Kneelsa-Clinical: KOA Screening Tool")
 st.markdown("""
 This tool implements the **5-variable clinical prediction model** developed in the ELSA-Brasil MSK study.
-It estimates the probability of radiographic Knee Osteoarthritis (KL $\ge$ 2).
+It estimates the probability of radiographic Knee Osteoarthritis (KL $\ge$ 2) **per knee**.
 """)
 
 st.markdown("---")
 
-# Colunas para input
+# Patient Demographics (same for both knees)
+st.subheader("Patient Demographics")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Patient Demographics")
     age = st.number_input("Age (years)", min_value=30, max_value=100, value=55)
-    bmi = st.number_input("BMI (kg/m²)", min_value=15.0, max_value=60.0, value=25.0, format="%.1f")
 
 with col2:
-    st.subheader("Clinical History")
-    pain = st.checkbox("Frequent Knee Pain?", help="Pain on most days of the last month")
-    surgery = st.checkbox("History of Knee Surgery?")
-    trauma = st.checkbox("History of Knee Trauma/Injury?")
+    bmi = st.number_input("BMI (kg/m²)", min_value=15.0, max_value=60.0, value=25.0, format="%.1f")
+
+st.markdown("---")
+
+# Knee-specific Clinical Features
+st.subheader("Clinical Features per Knee")
+
+# Select which knees to assess
+knee_selection = st.radio(
+    "Which knee(s) would you like to assess?",
+    options=["Left Knee Only", "Right Knee Only", "Both Knees"],
+    index=2
+)
+
+# Input variables for knees
+knees_to_assess = []
+knee_data = {}
+
+if "Left" in knee_selection:
+    knees_to_assess.append("Left")
+
+if "Right" in knee_selection:
+    knees_to_assess.append("Right")
+
+# Create columns for knee inputs
+if len(knees_to_assess) == 1:
+    # Single column for one knee
+    knee = knees_to_assess[0]
+    st.markdown(f"#### {knee} Knee")
+    pain = st.checkbox(f"Frequent {knee} Knee Pain?", key=f"pain_{knee}", help="Pain on most days of the last month")
+    surgery = st.checkbox(f"History of {knee} Knee Surgery?", key=f"surgery_{knee}")
+    trauma = st.checkbox(f"History of {knee} Knee Trauma/Injury?", key=f"trauma_{knee}")
+    knee_data[knee] = {"pain": pain, "surgery": surgery, "trauma": trauma}
+else:
+    # Two columns for both knees
+    col_left, col_right = st.columns(2)
+    
+    with col_left:
+        st.markdown("#### Left Knee")
+        pain_left = st.checkbox("Frequent Pain?", key="pain_Left", help="Pain on most days in a month in the last 12 months")
+        surgery_left = st.checkbox("History of Surgery?", key="surgery_Left")
+        trauma_left = st.checkbox("History of Trauma/Injury?", key="trauma_Left")
+        knee_data["Left"] = {"pain": pain_left, "surgery": surgery_left, "trauma": trauma_left}
+    
+    with col_right:
+        st.markdown("#### Right Knee")
+        pain_right = st.checkbox("Frequent Pain?", key="pain_Right", help="Pain on most days in a month in the last 12 months")
+        surgery_right = st.checkbox("History of Surgery?", key="surgery_Right")
+        trauma_right = st.checkbox("History of Trauma/Injury?", key="trauma_Right")
+        knee_data["Right"] = {"pain": pain_right, "surgery": surgery_right, "trauma": trauma_right}
 
 # ==========================================
 # CÁLCULO
 # ==========================================
 def calculate_probability(age, bmi, pain, surgery, trauma):
+    """Calculate the probability of KOA for a single knee."""
     # Equação Logit: z = B0 + B1*X1 + ...
     logit = (
         INTERCEPT +
@@ -63,24 +104,31 @@ def calculate_probability(age, bmi, pain, surgery, trauma):
     probability = 1 / (1 + np.exp(-logit))
     return probability
 
-if st.button("Calculate Risk", type="primary"):
-    prob = calculate_probability(age, bmi, pain, surgery, trauma)
-    
+st.markdown("---")
+
+if st.button("Calculate Probability", type="primary"):
     st.markdown("---")
     st.subheader("Results")
     
-    # Mostrador visual
-    st.metric(label="Estimated Probability of KOA", value=f"{prob:.1%}")
-    
-    # Lógica de Decisão (Triagem)
-    if prob >= THRESHOLD:
-        st.error(f"⚠️ **High Risk (Screening Positive)**")
-        st.write(f"The estimated probability is above the screening threshold ({THRESHOLD:.0%}).")
-        st.write("**Recommendation:** Proceed to radiographic evaluation (X-Ray) or image-based AI analysis.")
-    else:
-        st.success(f"✅ **Low Risk (Screening Negative)**")
-        st.write(f"The estimated probability is below the screening threshold ({THRESHOLD:.0%}).")
-        st.write("**Recommendation:** Radiographic evaluation may not be necessary at this moment unless clinical suspicion remains high.")
+    # Display results for each knee
+    for knee in knees_to_assess:
+        prob = calculate_probability(
+            age=age,
+            bmi=bmi,
+            pain=knee_data[knee]["pain"],
+            surgery=knee_data[knee]["surgery"],
+            trauma=knee_data[knee]["trauma"]
+        )
+        
+        # Create a nice display with metric
+        st.metric(
+            label=f"{knee} Knee - Estimated Probability of KOA",
+            value=f"{prob:.1%}",
+            help="Probability of radiographic KOA (KL ≥ 2)"
+        )
+        
+        # Additional context
+        st.write(f"This estimate is based on: Age ({age}), BMI ({bmi}), and clinical features specific to the {knee.lower()} knee.")
 
 st.markdown("---")
 st.caption("Disclaimer: This tool is for research and educational purposes only. It does not replace professional medical advice.")
