@@ -18,10 +18,10 @@ COEF_TRAUMA = 0.7674
 # ==========================================
 st.set_page_config(page_title="Kneelsa-Clinical", page_icon="🦵")
 
-st.title("Kneelsa-Clinical: KOA Prediction Tool")
+st.title("Kneelsa-Clinical: KOA Screening Tool")
 st.markdown("""
-This tool implements the **5-variable clinical prediction model** developed in the ELSA-Brasil MSK study.
-It estimates the probability of radiographic Knee Osteoarthritis (KL >= 2) **per knee**.
+This tool implements the **5-variable clinical screening model** developed in the ELSA-Brasil MSK study.
+It estimates the probability of prevalent radiographic Knee Osteoarthritis (KL >= 2) **per knee**.
 """)
 
 st.markdown("---")
