@@ -18,10 +18,10 @@ COEF_TRAUMA = 0.7674
 # ==========================================
 st.set_page_config(page_title="Kneelsa-Clinical", page_icon="🦵")
 
-st.title("Kneelsa-Clinical: KOA Screening Tool")
+st.title("Kneelsa-Clinical: KOA Prediction Tool")
 st.markdown("""
 This tool implements the **5-variable clinical prediction model** developed in the ELSA-Brasil MSK study.
-It estimates the probability of radiographic Knee Osteoarthritis (KL $\ge$ 2) **per knee**.
+It estimates the probability of radiographic Knee Osteoarthritis (KL >= 2) **per knee**.
 """)
 
 st.markdown("---")
@@ -34,7 +34,7 @@ with col1:
     age = st.number_input("Age (years)", min_value=30, max_value=100, value=55)
 
 with col2:
-    bmi = st.number_input("BMI (kg/m²)", min_value=15.0, max_value=60.0, value=25.0, format="%.1f")
+    bmi = st.number_input("BMI (kg/m²)", min_value=15.0, max_value=60.0, value=25.0, format="%.1f", step=1.0)
 
 st.markdown("---")
 
@@ -48,43 +48,131 @@ knee_selection = st.radio(
     index=2
 )
 
-# Determine which knees to assess
-knees_to_assess = []
-if "Left" in knee_selection:
-    knees_to_assess.append("Left")
-if "Right" in knee_selection:
-    knees_to_assess.append("Right")
 
-# Create columns for knee inputs
+def knee_svg(knee: str) -> str:
+    label = "RIGHT (R)" if knee == "Right" else "LEFT (L)"
+    accent = "#1f77b4" if knee == "Right" else "#d62728"
+    return f"""
+<svg width="54" height="54" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{label} knee">
+    <rect x="18" y="4" width="18" height="18" rx="6" fill="{accent}" opacity="0.85"/>
+    <circle cx="27" cy="27" r="9" fill="#f2f2f2" stroke="#666" stroke-width="2"/>
+    <rect x="18" y="32" width="18" height="18" rx="6" fill="{accent}" opacity="0.35"/>
+    <path d="M18 23 C22 17, 32 17, 36 23" fill="none" stroke="#666" stroke-width="2"/>
+    <path d="M18 31 C22 37, 32 37, 36 31" fill="none" stroke="#666" stroke-width="2"/>
+</svg>
+"""
+
+
+def knee_badge_html(knee: str, *, show_subtitle: bool = True) -> str:
+    # Simple, original inline SVG (no external assets) to make side obvious.
+    label = "RIGHT (R)" if knee == "Right" else "LEFT (L)"
+    subtitle = (
+        '<div style="font-size:12px;color:#666;line-height:1.2;">Radiographic view</div>'
+        if show_subtitle
+        else ""
+    )
+    return f"""
+<div style="display:flex;align-items:center;gap:10px;">
+    {knee_svg(knee)}
+    <div>
+        <div style="font-weight:700;line-height:1;">{label}</div>
+        {subtitle}
+    </div>
+</div>
+"""
+
+
+def radiographic_view_html() -> str:
+    return '<div style="text-align:center;font-size:12px;color:#666;margin:6px 0 10px 0;">Radiographic view</div>'
+
+
+def both_knees_icons_line_html() -> str:
+    # Centered line: RIGHT label + right icon + left icon + LEFT label
+    return "".join(
+        [
+            '<div style="display:flex;justify-content:center;align-items:center;gap:18px;margin-bottom:10px;">',
+            '<div style="font-weight:700;">Right knee (R)</div>',
+            knee_svg("Right"),
+            knee_svg("Left"),
+            '<div style="font-weight:700;">Left knee (L)</div>',
+            "</div>",
+        ]
+    )
+
+
+def knee_column_header_html(knee: str, *, justify: str) -> str:
+    label = "RIGHT (R)" if knee == "Right" else "LEFT (L)"
+    return (
+        f'<div style="display:flex;justify-content:{justify};align-items:center;gap:10px;">'
+        f'<div style="font-weight:700;">{label}</div>'
+        f'{knee_svg(knee)}'
+        "</div>"
+    )
+
+
+def get_knees_to_assess(selection: str) -> list[str]:
+    if selection == "Both Knees":
+        return ["Left", "Right"]
+    if selection == "Left Knee Only":
+        return ["Left"]
+    if selection == "Right Knee Only":
+        return ["Right"]
+    return []
+
+
+knees_to_assess = get_knees_to_assess(knee_selection)
+
+# Create inputs for knee-specific variables
 if len(knees_to_assess) == 1:
-    # Single column for one knee
     knee = knees_to_assess[0]
-    st.markdown(f"#### {knee} Knee")
-    pain = st.checkbox(f"Frequent {knee} Knee Pain?", key=f"pain_{knee}", help="Pain on most days of the last month")
-    surgery = st.checkbox(f"History of {knee} Knee Surgery?", key=f"surgery_{knee}")
-    trauma = st.checkbox(f"History of {knee} Knee Trauma/Injury?", key=f"trauma_{knee}")
+    st.markdown(knee_badge_html(knee), unsafe_allow_html=True)
+    st.checkbox("Frequent Pain?", key=f"pain_{knee}", help="Pain on most days in a month in the last 12 months")
+    st.checkbox("History of Surgery?", key=f"surgery_{knee}")
+    st.checkbox("History of Trauma/Injury?", key=f"trauma_{knee}")
 else:
-    # Two columns for both knees
-    col_left, col_right = st.columns(2)
-    
-    with col_left:
-        st.markdown("#### Left Knee")
-        pain_left = st.checkbox("Frequent Pain?", key="pain_Left", help="Pain on most days in a month in the last 12 months")
-        surgery_left = st.checkbox("History of Surgery?", key="surgery_Left")
-        trauma_left = st.checkbox("History of Trauma/Injury?", key="trauma_Left")
-    
-    with col_right:
-        st.markdown("#### Right Knee")
-        pain_right = st.checkbox("Frequent Pain?", key="pain_Right", help="Pain on most days in a month in the last 12 months")
-        surgery_right = st.checkbox("History of Surgery?", key="surgery_Right")
-        trauma_right = st.checkbox("History of Trauma/Injury?", key="trauma_Right")
+    # Radiographic convention: RIGHT knee on the LEFT side of the screen
+    st.markdown(radiographic_view_html(), unsafe_allow_html=True)
+    st.markdown(both_knees_icons_line_html(), unsafe_allow_html=True)
+
+    def grid_row(label: str, right_key: str, left_key: str, *, help_text: str | None = None) -> None:
+        # 4-column mirrored layout:
+        # [Right label (align right)] [Right checkbox] [Left checkbox] [Left label (align left)]
+        col_rl, col_rcb, col_lcb, col_ll = st.columns([3, 1, 1, 3])
+        with col_rl:
+            st.markdown(f'<div style="text-align:right; padding-top:6px;">{label}</div>', unsafe_allow_html=True)
+        with col_rcb:
+            st.checkbox(
+                "right",
+                key=right_key,
+                help=help_text,
+                label_visibility="collapsed",
+            )
+        with col_lcb:
+            st.checkbox(
+                "left",
+                key=left_key,
+                help=help_text,
+                label_visibility="collapsed",
+            )
+        with col_ll:
+            st.markdown(f'<div style="text-align:left; padding-top:6px;">{label}</div>', unsafe_allow_html=True)
+
+    grid_row(
+        "Frequent Pain?",
+        "pain_Right",
+        "pain_Left",
+        help_text="Pain on most days in a month in the last 12 months",
+    )
+    grid_row("History of Surgery?", "surgery_Right", "surgery_Left")
+    grid_row("History of Trauma/Injury?", "trauma_Right", "trauma_Left")
+
+st.markdown("---")
 
 # ==========================================
 # CÁLCULO
 # ==========================================
 def calculate_probability(age, bmi, pain, surgery, trauma):
     """Calculate the probability of KOA for a single knee."""
-    # Equação Logit: z = B0 + B1*X1 + ...
     logit = (
         INTERCEPT +
         (COEF_AGE * age) +
@@ -93,40 +181,70 @@ def calculate_probability(age, bmi, pain, surgery, trauma):
         (COEF_SURGERY * 1 if surgery else 0) +
         (COEF_TRAUMA * 1 if trauma else 0)
     )
-    
-    # Função Sigmoide: p = 1 / (1 + e^-z)
     probability = 1 / (1 + np.exp(-logit))
     return probability
-
-st.markdown("---")
 
 if st.button("Calculate Probability", type="primary"):
     st.markdown("---")
     st.subheader("Results")
-    
-    # Display results for each knee
-    for knee in knees_to_assess:
-        knee_pain = st.session_state.get(f"pain_{knee}", False)
-        knee_surgery = st.session_state.get(f"surgery_{knee}", False)
-        knee_trauma = st.session_state.get(f"trauma_{knee}", False)
+
+    knees_to_display = get_knees_to_assess(knee_selection)
+
+    if not knees_to_display:
+        st.error("No knees selected. Please select at least one knee.")
+    else:
+        def render_knee_result(container, knee: str, *, show_badge: bool) -> None:
+            knee_pain = st.session_state.get(f"pain_{knee}", False)
+            knee_surgery = st.session_state.get(f"surgery_{knee}", False)
+            knee_trauma = st.session_state.get(f"trauma_{knee}", False)
+
+            prob = calculate_probability(
+                age=age,
+                bmi=bmi,
+                pain=knee_pain,
+                surgery=knee_surgery,
+                trauma=knee_trauma,
+            )
+
+            with container:
+                if show_badge:
+                    st.markdown(
+                        f"<div style=\"display:flex;justify-content:center;\">{knee_badge_html(knee)}</div>",
+                        unsafe_allow_html=True,
+                    )
+                st.metric(
+                    label=(
+                        "Probability of KOA"
+                        if show_badge
+                        else f"{knee} Knee - Probability of KOA"
+                    ),
+                    value=f"{prob:.1%}",
+                    help="Probability of radiographic KOA (KL >= 2)",
+                )
+                st.write(
+                    f"**Input data:** Age {age}y | BMI {bmi:.1f} | "
+                    f"Pain: {'Yes' if knee_pain else 'No'} | "
+                    f"Surgery: {'Yes' if knee_surgery else 'No'} | "
+                    f"Trauma: {'Yes' if knee_trauma else 'No'}"
+                )
+
+        # Side-by-side when both knees are selected (RIGHT shown on LEFT side)
+        if set(knees_to_display) == {"Left", "Right"}:
+            st.markdown(radiographic_view_html(), unsafe_allow_html=True)
+            col_r, col_l = st.columns(2)
+            with col_r:
+                st.markdown(knee_column_header_html("Right", justify="flex-end"), unsafe_allow_html=True)
+                spacer, results = st.columns([1, 3])
+                render_knee_result(results, "Right", show_badge=False)
+
+            with col_l:
+                st.markdown(knee_column_header_html("Left", justify="flex-start"), unsafe_allow_html=True)
+                results, spacer = st.columns([3, 1])
+                render_knee_result(results, "Left", show_badge=False)
+        else:
+            render_knee_result(st.container(), knees_to_display[0], show_badge=True)
         
-        prob = calculate_probability(
-            age=age,
-            bmi=bmi,
-            pain=knee_pain,
-            surgery=knee_surgery,
-            trauma=knee_trauma
-        )
-        
-        # Create a nice display with metric
-        st.metric(
-            label=f"{knee} Knee - Estimated Probability of KOA",
-            value=f"{prob:.1%}",
-            help="Probability of radiographic KOA (KL ≥ 2)"
-        )
-        
-        # Additional context
-        st.write(f"This estimate is based on: Age ({age}), BMI ({bmi}), and clinical features specific to the {knee.lower()} knee.")
+        st.success("✅ Calculation complete")
 
 st.markdown("---")
 st.caption("Disclaimer: This tool is for research and educational purposes only. It does not replace professional medical advice.")
