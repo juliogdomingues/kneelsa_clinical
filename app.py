@@ -153,88 +153,56 @@ else:
     # Radiographic convention: RIGHT knee on the LEFT side of the screen
     st.markdown(radiographic_view_html(), unsafe_allow_html=True)
     
-    # Add responsive CSS for smaller screens
-    st.markdown(
-        """
-        <style>
-        /* Responsive adjustments for smaller screens */
-        @media (max-width: 768px) {
-            /* Reduce font size on mobile */
-            .stMarkdown p, .stMarkdown div {
-                font-size: 0.85rem !important;
-            }
-            /* Reduce padding */
-            .stMarkdown div[style*="padding"] {
-                padding: 2px 2px !important;
-            }
-            /* Make checkboxes slightly smaller */
-            div[data-testid="stCheckbox"] {
-                transform: scale(0.9);
-            }
-        }
-        @media (max-width: 480px) {
-            /* Even smaller on very small screens */
-            .stMarkdown p, .stMarkdown div {
-                font-size: 0.75rem !important;
-            }
-            .stMarkdown div[style*="padding"] {
-                padding: 1px 1px !important;
-            }
-            div[data-testid="stCheckbox"] {
-                transform: scale(0.85);
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    # Simple two-column layout (fully responsive, Streamlit-native)
+    col_right, col_left = st.columns(2)
     
-    # Use consistent column widths for perfect alignment
-    COL_WIDTHS = [35, 10, 10, 45]
+    with col_right:
+        st.markdown(
+            f'<div style="text-align:center;margin-bottom:10px;">'
+            f'<div style="font-weight:700;">Right knee (R)</div>'
+            f'{knee_svg("Right")}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.checkbox(
+            SYMPTOMS_LABEL,
+            key="symptoms_Right",
+            help="Pain, discomfort, or stiffness that lasted for most days for at least one month in the last 12 months"
+        )
+        st.checkbox(
+            SURGERY_LABEL,
+            key="surgery_Right",
+            help="Ever undergone any type of surgery, including arthroscopy, meniscal or ligament repair?"
+        )
+        st.checkbox(
+            TRAUMA_LABEL,
+            key="trauma_Right",
+            help="Ever injured or suffered trauma that caused difficulty walking for at least one week?"
+        )
     
-    # Header row
-    col1, col2, col3, col4 = st.columns(COL_WIDTHS)
-    with col1:
-        st.markdown('<div style="text-align:right; font-weight:700; padding:5px;">Right knee (R)</div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown(f'<div style="text-align:center; padding:5px;">{knee_svg("Right")}</div>', unsafe_allow_html=True)
-    with col3:
-        st.markdown(f'<div style="text-align:center; padding:5px;">{knee_svg("Left")}</div>', unsafe_allow_html=True)
-    with col4:
-        st.markdown('<div style="text-align:left; font-weight:700; padding:5px;">Left knee (L)</div>', unsafe_allow_html=True)
-    
-    # Row 1: Symptoms
-    col1, col2, col3, col4 = st.columns(COL_WIDTHS)
-    with col1:
-        st.markdown(f'<div style="text-align:right; padding:8px 5px;">{SYMPTOMS_LABEL}</div>', unsafe_allow_html=True)
-    with col2:
-        st.checkbox(SYMPTOMS_LABEL, key="symptoms_Right", label_visibility="collapsed", help="Pain, discomfort, or stiffness that lasted for most days for at least one month in the last 12 months")
-    with col3:
-        st.checkbox(SYMPTOMS_LABEL, key="symptoms_Left", label_visibility="collapsed", help="Pain, discomfort, or stiffness that lasted for most days for at least one month in the last 12 months")
-    with col4:
-        st.markdown(f'<div style="text-align:left; padding:8px 5px;">{SYMPTOMS_LABEL}</div>', unsafe_allow_html=True)
-    
-    # Row 2: Surgery
-    col1, col2, col3, col4 = st.columns(COL_WIDTHS)
-    with col1:
-        st.markdown(f'<div style="text-align:right; padding:8px 5px;">{SURGERY_LABEL}</div>', unsafe_allow_html=True)
-    with col2:
-        st.checkbox(SURGERY_LABEL, key="surgery_Right", label_visibility="collapsed", help="Ever undergone any type of surgery, including arthroscopy, meniscal or ligament repair?")
-    with col3:
-        st.checkbox(SURGERY_LABEL, key="surgery_Left", label_visibility="collapsed", help="Ever undergone any type of surgery, including arthroscopy, meniscal or ligament repair?")
-    with col4:
-        st.markdown(f'<div style="text-align:left; padding:8px 5px;">{SURGERY_LABEL}</div>', unsafe_allow_html=True)
-    
-    # Row 3: Trauma
-    col1, col2, col3, col4 = st.columns(COL_WIDTHS)
-    with col1:
-        st.markdown(f'<div style="text-align:right; padding:8px 5px;">{TRAUMA_LABEL}</div>', unsafe_allow_html=True)
-    with col2:
-        st.checkbox(TRAUMA_LABEL, key="trauma_Right", label_visibility="collapsed", help="Ever injured or suffered trauma that caused difficulty walking for at least one week?")
-    with col3:
-        st.checkbox(TRAUMA_LABEL, key="trauma_Left", label_visibility="collapsed", help="Ever injured or suffered trauma that caused difficulty walking for at least one week?")
-    with col4:
-        st.markdown(f'<div style="text-align:left; padding:8px 5px;">{TRAUMA_LABEL}</div>', unsafe_allow_html=True)
+    with col_left:
+        st.markdown(
+            f'<div style="text-align:center;margin-bottom:10px;">'
+            f'<div style="font-weight:700;">Left knee (L)</div>'
+            f'{knee_svg("Left")}'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        st.checkbox(
+            SYMPTOMS_LABEL,
+            key="symptoms_Left",
+            help="Pain, discomfort, or stiffness that lasted for most days for at least one month in the last 12 months"
+        )
+        st.checkbox(
+            SURGERY_LABEL,
+            key="surgery_Left",
+            help="Ever undergone any type of surgery, including arthroscopy, meniscal or ligament repair?"
+        )
+        st.checkbox(
+            TRAUMA_LABEL,
+            key="trauma_Left",
+            help="Ever injured or suffered trauma that caused difficulty walking for at least one week?"
+        )
 
 
 st.markdown("---")
