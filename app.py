@@ -1,16 +1,40 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
+from pathlib import Path
 
 # ==========================================
-# CONFIGURAÇÃO DO MODELO
+# CONFIGURAÇÃO DO MODELO (carregado de CSV)
 # ==========================================
-# Coeficientes do modelo de Regressão Logística (5 variáveis)
-INTERCEPT = -10.8707
-COEF_AGE = 0.0870
-COEF_BMI = 0.1199
-COEF_SYMPTOMS = 0.3634
-COEF_SURGERY = 2.0405
-COEF_TRAUMA = 0.7674
+SINGLE_CSV = Path("final_5var_model.csv")
+
+
+@st.cache_data
+def load_model_params():
+    """
+    Loads the 5-variable model parameters from a single CSV:
+    results_final_analysis/final_5var_model.csv
+    """
+    if not SINGLE_CSV.exists():
+        raise FileNotFoundError(
+            "Model CSV not found. Please run complete.py to generate:\n"
+            f"- {SINGLE_CSV}"
+        )
+
+    df = pd.read_csv(SINGLE_CSV)
+
+    intercept_row = df.loc[df["feature"] == "__INTERCEPT__"].iloc[0]
+    intercept = float(intercept_row["intercept"])
+
+    features_df = df.loc[
+        df["param_type"] == "feature",
+        ["feature", "imputer_median", "scaler_mean", "scaler_scale", "coef_on_scaled"],
+    ].copy()
+
+    return intercept, features_df
+
+
+INTERCEPT, MODEL_FEATURES = load_model_params()
 
 # ==========================================
 # INTERFACE DO USUÁRIO
@@ -211,17 +235,29 @@ st.markdown("---")
 # CÁLCULO
 # ==========================================
 def calculate_probability(age, bmi, symptoms, surgery, trauma):
-    """Calculate the probability of KOA for a single knee."""
-    logit = (
-        INTERCEPT +
-        (COEF_AGE * age) +
-        (COEF_BMI * bmi) +
-        (COEF_SYMPTOMS * 1 if symptoms else 0) +
-        (COEF_SURGERY * 1 if surgery else 0) +
-        (COEF_TRAUMA * 1 if trauma else 0)
-    )
+    """Calculate the probability of KOA for a single knee using the saved preprocessing + LR params."""
+    x = {
+        "age": float(age),
+        "bmi": float(bmi),
+        "history_surgery": 1.0 if surgery else 0.0,
+        "frequent_symptoms": 1.0 if symptoms else 0.0,
+        "history_trauma": 1.0 if trauma else 0.0,
+    }
+
+    logit = float(INTERCEPT)
+    for _, row in MODEL_FEATURES.iterrows():
+        f = row["feature"]
+        val = x.get(f, None)
+
+        # median imputation (only used if val is missing)
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            val = float(row["imputer_median"])
+
+        z = (float(val) - float(row["scaler_mean"])) / float(row["scaler_scale"])
+        logit += float(row["coef_on_scaled"]) * z
+
     probability = 1 / (1 + np.exp(-logit))
-    return probability
+    return float(probability)
 
 if st.button("Calculate Probability", type="primary"):
     st.markdown("---")
