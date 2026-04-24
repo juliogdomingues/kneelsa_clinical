@@ -1,0 +1,14 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Streamlit cache/config artifacts
+.streamlit/secrets.toml

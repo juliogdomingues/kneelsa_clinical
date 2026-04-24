@@ -41,7 +41,7 @@ This app implements the **5-variable clinical prediction model** described in ou
 
 If you use this tool, please cite our work:
 
-> Domingues, J. G., et al. "Cost-Effective Screening for Knee Osteoarthritis: A Serial Clinical-Image AI Pipeline." (2025).
+> Domingues JG, Veloso AA, Telles RW, Barreto SM. "A clinical-epidemiological tool for identifying prevalent radiographic knee osteoarthritis: data from ELSA-Brasil MSK" (2026).
 
 ## License
 
